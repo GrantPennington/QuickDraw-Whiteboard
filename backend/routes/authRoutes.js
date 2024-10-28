@@ -4,12 +4,17 @@ const { body } = require('express-validator');
 // import controller functions
 const { loginUser, signupUser } = require('../controllers/authController');
 
+// import middleware
+const { loginLimiter, signupLimiter } = require('../middleware/rateLimiter');
+
 // initialize router
 const router = express.Router();
 
 // define routes
-router.post('/login', [
-    /* !! INPUT VALIDATION AND SANITATION !!*/
+router.post(
+    '/login', // route
+    loginLimiter, // rate limiter middleware
+    [ /* !! INPUT VALIDATION AND SANITATION !!*/
     // Validate identifier as either email or username
     body('identifier')
         .custom(value => {
@@ -28,11 +33,13 @@ router.post('/login', [
         .withMessage('Password must be at least 8 characters')
         .trim(), // Removes whitespace from both ends of the password
     ],
-    loginUser
+    loginUser // login controller function
 );
 
-router.post('/signup', [
-    /* !! INPUT VALIDATION AND SANITATION !!*/
+router.post(
+    '/signup', // route
+    signupLimiter, // rate limiter middleware
+    [ /* !! INPUT VALIDATION AND SANITATION !!*/
     // Validate and sanitize the email field
     body('email')
         .isEmail()
@@ -64,7 +71,7 @@ router.post('/signup', [
         .trim()
         .escape(),
     ],
-    signupUser
+    signupUser // signup controller function
 );
 
 module.exports = router;
