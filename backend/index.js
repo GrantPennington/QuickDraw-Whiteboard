@@ -29,7 +29,7 @@ if(process.env.NODE_ENV === 'production') {
 app.use(bodyParser.json());
 // CORS middleware
 app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your frontend URL
+    origin: process.env.FRONTEND_CLIENT_URL || 'http://localhost:3000', // Replace with your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
     credentials: true, // Allow credentials (cookies) to be sent across domains
@@ -41,7 +41,7 @@ app.use('/api/v1/auth', authRoutes);
 /* EX: app.use('/api/v1/protected-route', protect, protectedRoutes) */
 
 // error handler middleware
-app.use(errorHandler)
+app.use(errorHandler);
 
 // define port number
 const PORT = process.env.PORT || 3000;
