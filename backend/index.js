@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
 const connectDB = require('./config/db');
 require('dotenv').config();
 // import middleware
@@ -14,6 +15,15 @@ connectDB();
 
 // initialize express app
 const app = express();
+
+if(process.env.NODE_ENV === 'production') {
+    // Production-specific settings
+    app.use(helmet()); // Use helmet middleware to set secure HTTP headers
+    console.log('Running in production mode...');
+} else {
+    // Dev-specific settings
+    console.log('Running in development mode...');
+}
 
 // bodyParser middleware
 app.use(bodyParser.json());
