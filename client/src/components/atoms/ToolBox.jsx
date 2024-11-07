@@ -4,6 +4,7 @@ import DrawIcon from '@mui/icons-material/Draw';
 import BrushIcon from '@mui/icons-material/Brush';
 import RectangleIcon from '@mui/icons-material/Rectangle';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
 import { useTool } from '../../context/ToolContext';
 import CustomTooltip from '../CustomTooltip';
 import { capitalizeFirstLetter } from '../../utils/index.js';
@@ -17,6 +18,8 @@ const getIcon = (tool) => {
         return <DrawIcon sx={{ fontSize: 28 }} />
     } else if(tool === 'eraser') {
         return <AutoFixNormalIcon sx={{ fontSize: 28 }} />
+    } else {
+        return <TextFieldsIcon sx={{ fontSize: 28 }} />
     }
 }
 

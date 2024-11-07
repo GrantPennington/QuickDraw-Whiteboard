@@ -4,7 +4,7 @@ const ToolContext = createContext();
 
 export const useTool = () => useContext(ToolContext);
 
-const DRAWING_TOOL_OPTIONS = ['pen', 'rectangle', 'line', 'eraser'];
+const DRAWING_TOOL_OPTIONS = ['pen', 'rectangle', 'line', 'eraser', 'text'];
 
 export const ToolProvider = ({ children }) => {
     const [drawingTool, setDrawingTool] = useState('pen');
@@ -12,7 +12,7 @@ export const ToolProvider = ({ children }) => {
     const [fillColor, setFillColor] = useState('#ff0000'); // Default color is red
     const [strokeColor, setStrokeColor] = useState('#000000'); // Default color is black
 
-    const lineSizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+    const lineSizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 40, 50];
 
     const handleSelectLineSize = (e) => {
         setLineSize(e.target.value);
@@ -20,7 +20,6 @@ export const ToolProvider = ({ children }) => {
 
     const handleChangeTool = (newValue) => {
         if(DRAWING_TOOL_OPTIONS.includes(newValue)) {
-            console.log(`Selected tool: ${newValue}`);
             setDrawingTool(newValue);
         }
     }

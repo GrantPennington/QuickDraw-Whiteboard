@@ -13,9 +13,12 @@ export const CanvasProvider = ({ children }) => {
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentRect, setCurrentRect] = useState(null); // Track current rectangle being drawn
     const [currentLine, setCurrentLine] = useState(null); // Track current line being drawn
+    const [currentPen, setCurrentPen] = useState([])
+    const [elements, setElements] = useState([]);
     const [rectangles, setRectangles] = useState([]); // Store completed rectangles
     const [lines, setLines] = useState([]); // Store completed lines
     const [penPaths, setPenPaths] = useState([]);
+    const [eraserPaths, setEraserPaths] = useState([]);
 
     const startDrawing = (e) => {
         const context = canvasRef.current.getContext('2d');
@@ -49,6 +52,8 @@ export const CanvasProvider = ({ children }) => {
         setLines([]);
         setCurrentLine(null);
         setPenPaths([]);
+        setEraserPaths([]);
+        setElements([]);
     }
 
     // Event handler for mouse down
@@ -58,14 +63,16 @@ export const CanvasProvider = ({ children }) => {
         const startY = e.clientY - rect.top;
 
         if (drawingTool === 'rectangle') {
-            setCurrentRect({ x: startX, y: startY, width: 0, height: 0, lineSize: lineSize, fillColor: fillColor, strokeColor: strokeColor });
+            setCurrentRect({ x: startX, y: startY, width: 0, height: 0, lineSize: lineSize, fillColor: fillColor, strokeColor: strokeColor, type: 'rectangle' });
         } else if (drawingTool === 'line') {
-            setCurrentLine({ startX, startY, endX: startX, endY: startY, lineSize: lineSize, strokeColor: strokeColor });
+            setCurrentLine({ startX, startY, endX: startX, endY: startY, lineSize: lineSize, strokeColor: strokeColor, type: 'line' });
         } else if(drawingTool === 'pen') {
-            setPenPaths((prevPaths) => [...prevPaths, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: strokeColor }]]);
+            setPenPaths((prevPaths) => [...prevPaths, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: strokeColor, type: 'pen' }]]);
+            //setElements((prevElements) => [...prevElements, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: strokeColor, type: 'pen' }] ]);
             startDrawing(e);
         } else if(drawingTool === 'eraser') {
-            setPenPaths((prevPaths) => [...prevPaths, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: 'white' }]]);
+            setPenPaths((prevPaths) => [...prevPaths, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: 'white', type: 'eraser' }]]);
+            // setElements((prevElements) => [...prevElements, [{ x: startX, y: startY, lineSize: lineSize, strokeColor: strokeColor, type: 'eraser' }] ]);
             startDrawing(e);
         }
         setIsDrawing(true);
@@ -102,7 +109,7 @@ export const CanvasProvider = ({ children }) => {
             setPenPaths((prevPaths) => {
                 const newPaths = [...prevPaths];
                 const lastPath = newPaths.pop();
-                newPaths.push([...lastPath, { x: currentX, y: currentY, lineSize: lineSize, strokeColor: strokeColor }]);
+                newPaths.push([...lastPath, { x: currentX, y: currentY, lineSize: lineSize, strokeColor: strokeColor, type: 'pen' }]);
                 return newPaths;
             });
         } else if (drawingTool === 'eraser' && penPaths.length > 0) {
@@ -111,7 +118,7 @@ export const CanvasProvider = ({ children }) => {
             setPenPaths((prevPaths) => {
                 const newPaths = [...prevPaths];
                 const lastPath = newPaths.pop();
-                newPaths.push([...lastPath, { x: currentX, y: currentY, lineSize: lineSize, strokeColor: 'white' }]);
+                newPaths.push([...lastPath, { x: currentX, y: currentY, lineSize: lineSize, strokeColor: 'white', type: 'eraser' }]);
                 return newPaths;
             });
         }
@@ -122,12 +129,16 @@ export const CanvasProvider = ({ children }) => {
         if (isDrawing) {
             if (drawingTool === 'rectangle' && currentRect) {
                 setRectangles((prevRects) => [...prevRects, currentRect]);
+                setElements((prevElements) => [...prevElements, currentRect]);
                 setCurrentRect(null);
             } else if (drawingTool === 'line' && currentLine) {
                 setLines((prevLines) => [...prevLines, currentLine]);
+                setElements((prevElements) => [...prevElements, currentLine]);
                 setCurrentLine(null);
             } else if(drawingTool === 'pen') {
                 stopDrawing(e);
+                //setPenPaths((prevPaths) => [...prevPaths, ...currentPen ]);
+                // setElements((prevElements) => [...prevElements, penPaths ]);
             } else if(drawingTool === 'eraser') {
                 stopDrawing(e);
             }
@@ -163,6 +174,28 @@ export const CanvasProvider = ({ children }) => {
         link.click();
     };
 
+    const redraw = (ctx) => {
+        // Redraw each element in the correct order
+        elements.forEach(element => {
+            if(element.type === 'rectangle') {
+                ctx.beginPath();
+                ctx.rect(element.x, element.y, element.width, element.height);
+                ctx.lineWidth = element.lineSize;
+                ctx.fillStyle = element.fillColor;
+                ctx.fill();
+                ctx.strokeStyle = element.strokeColor;
+                ctx.stroke();
+            } else if(element.type === 'line') {
+                ctx.beginPath();
+                ctx.moveTo(element.startX, element.startY);
+                ctx.lineTo(element.endX, element.endY);
+                ctx.lineWidth = element.lineSize;
+                ctx.strokeStyle = element.strokeColor;
+                ctx.stroke();
+            }
+        })
+    };
+
     // Draw all shapes on the canvas
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -174,26 +207,29 @@ export const CanvasProvider = ({ children }) => {
         context.clearRect(0, 0, canvas.width, canvas.height);
         //shapeContext.clearRect(0, 0, shapeLayer.width, shapeLayer.height);
 
-        // Draw all rectangles
-        rectangles.forEach(({ x, y, width, height, lineSize, fillColor, strokeColor }) => {
-            context.beginPath();
-            context.rect(x, y, width, height);
-            context.lineWidth = lineSize;
-            context.fillStyle = fillColor;
-            context.fill();
-            context.strokeStyle = strokeColor;
-            context.stroke();
-        });
+        // // Draw all rectangles
+        // rectangles.forEach(({ x, y, width, height, lineSize, fillColor, strokeColor }) => {
+        //     context.beginPath();
+        //     context.rect(x, y, width, height);
+        //     context.lineWidth = lineSize;
+        //     context.fillStyle = fillColor;
+        //     context.fill();
+        //     context.strokeStyle = strokeColor;
+        //     context.stroke();
+        // });
 
-        // Draw all lines
-        lines.forEach(({ startX, startY, endX, endY, lineSize, strokeColor }) => {
-            context.beginPath();
-            context.moveTo(startX, startY);
-            context.lineTo(endX, endY);
-            context.lineWidth = lineSize;
-            context.strokeStyle = strokeColor;
-            context.stroke();
-        });
+        // // Draw all lines
+        // lines.forEach(({ startX, startY, endX, endY, lineSize, strokeColor }) => {
+        //     context.beginPath();
+        //     context.moveTo(startX, startY);
+        //     context.lineTo(endX, endY);
+        //     context.lineWidth = lineSize;
+        //     context.strokeStyle = strokeColor;
+        //     context.stroke();
+        // });
+        redraw(context);
+
+        // Draw all eraser paths (free drawing)
 
         // Draw all pen paths (free drawing)
         penPaths.forEach((path) => {

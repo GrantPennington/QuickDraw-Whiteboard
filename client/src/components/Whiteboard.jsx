@@ -41,13 +41,16 @@ const Whiteboard = () => {
                             tool={'pen'}
                         />
                         <ToolBox 
+                            tool={'eraser'}
+                        />
+                        <ToolBox 
                             tool={'rectangle'}
                         />
                         <ToolBox 
                             tool={'line'}
                         />
                         <ToolBox 
-                            tool={'eraser'}
+                            tool={'text'}
                         />
                     </Box>
 
